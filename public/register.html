@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Kayıt Ol — Kariyer Sağlık</title>
+  <link rel="stylesheet" href="/styles.css"/>
+  <style>
+    .wrap-narrow{max-width:720px;margin:0 auto}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .grid-1{display:grid;grid-template-columns:1fr;gap:12px}
+    label{font-size:12px;color:#9BB1DA;margin-bottom:4px;display:block}
+    input{width:100%;background:#0b1430;color:#EAF1FF;border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:10px}
+    .or{display:flex;align-items:center;gap:10px;margin:12px 0}
+    .or:before,.or:after{content:"";height:1px;background:rgba(255,255,255,.12);flex:1}
+    .providers{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .prov{display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:10px;background:#0e1734;text-decoration:none;color:#EAF1FF}
+    .muted{color:#9BB1DA}
+  </style>
+</head>
+<body>
+  <div class="wrap wrap-narrow">
+    <div class="nav">
+      <div class="brand">💼 Kariyer Sağlık</div>
+      <div class="sp"></div>
+      <a class="btn secondary" href="/index.html">Ana</a>
+    </div>
+
+    <section class="hero">
+      <div class="hero-in">
+        <h1>Kayıt Ol</h1>
+        <p>Bilgilerini gir ya da Google/GitHub ile hızlıca kaydol.</p>
+      </div>
+    </section>
+
+    <section class="card">
+      <form id="form" class="grid">
+        <div>
+          <label for="fullName">İsim Soyisim</label>
+          <input id="fullName" name="fullName" placeholder="Ad Soyad" required/>
+        </div>
+        <div>
+          <label for="phone">Telefon</label>
+          <input id="phone" name="phone" placeholder="5xx xxx xx xx" pattern="^[0-9+\\s()-]{7,20}$"/>
+        </div>
+        <div>
+          <label for="email">E-posta</label>
+          <input id="email" name="email" type="email" placeholder="ornek@posta.com" required/>
+        </div>
+        <div>
+          <label for="password">Şifre</label>
+          <input id="password" name="password" type="password" minlength="6" required/>
+        </div>
+        <div class="grid-1">
+          <button id="btnRegister" class="btn">Kayıt Ol</button>
+          <div id="msg" class="small muted"></div>
+        </div>
+      </form>
+
+      <div class="or"><span class="small muted">veya</span></div>
+
+      <div class="providers">
+        <a class="prov" href="/oauth/google">🔵 Google ile Kaydol</a>
+        <a class="prov" href="/oauth/github">⚫ GitHub ile Kaydol</a>
+      </div>
+
+      <p class="small muted" style="margin-top:12px">
+        Zaten hesabın var mı? <a href="/index.html">Giriş yap</a>
+      </p>
+    </section>
+  </div>
+
+  <script>
+    const api=(p)=>p;
+    const $=(s)=>document.querySelector(s);
+    const msg=$('#msg');
+    const v=(id)=>$(id).value.trim();
+
+    async function register(){
+      msg.textContent='Kaydediliyor...';
+      const payload = {
+        fullName: v('#fullName'),
+        phone: v('#phone'),
+        email: v('#email'),
+        password: v('#password'),
+      };
+      try{
+        const r = await fetch(api('/auth/register'), {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify(payload)
+        });
+        const j = await r.json();
+        if(!r.ok) throw new Error(j.message || 'Kayıt başarısız');
+
+        if (j.token) localStorage.setItem('token', j.token);
+        msg.textContent='✔️ Kayıt başarılı. Yönlendiriliyorsun...';
+        setTimeout(()=>{ window.location.href='/profile.html'; }, 600);
+      }catch(e){
+        msg.textContent='Hata: '+(e.message||'Bilinmeyen hata');
+      }
+    }
+    document.getElementById('btnRegister').onclick=(e)=>{ e.preventDefault(); register(); };
+  </script>
+</body>
+</html>

@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Analiz — Kariyer Sağlık</title>
+  <link rel="stylesheet" href="/styles.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <style>
+    .tbl{width:100%;border-collapse:collapse}
+    .tbl th,.tbl td{border-bottom:1px solid rgba(255,255,255,.08);padding:10px 8px;text-align:left;vertical-align:top}
+    .tbl th{color:#9BB1DA;font-size:12px;font-weight:600}
+    .pill{padding:4px 8px;border-radius:999px;font-size:12px;border:1px solid rgba(255,255,255,.12)}
+    .pill.low{background:#103a2c;color:#92ffd6}
+    .pill.mid{background:#3b2b0e;color:#ffd992}
+    .pill.high{background:#3a1010;color:#ffacac}
+
+    .overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:50}
+    .modal{width:min(880px,94vw);background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:16px;box-shadow:0 20px 60px rgba(0,0,0,.35)}
+    .modal .head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
+    .modal .title{font-weight:800}
+    .modal .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;max-height:min(64vh,560px);overflow:auto}
+    .card-mini{border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:10px;background:#0e1734}
+    .list{display:flex;flex-direction:column;gap:10px}
+    .item{border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:10px;background:#0e1734}
+    .sub{font-size:12px;color:#9BB1DA}
+    .x{background:transparent;border:1px solid rgba(255,255,255,.12);color:#EAF1FF;border-radius:10px;padding:6px 10px;cursor:pointer}
+    .muted{color:#9BB1DA}
+    .hidden{display:none !important}
+    .btnbar{display:flex;gap:8px;align-items:center}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+    .danger{border-color:#aa2e2e!important;color:#ffd3d3!important}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="nav">
+      <div class="brand">💼 Kariyer Sağlık</div>
+      <div class="sp"></div>
+      <a class="btn secondary" href="/profile.html">Profil</a>
+      <a class="btn secondary" href="/analysis.html">Analiz</a>
+    </div>
+
+    <section class="hero">
+      <div class="hero-in">
+        <h1>Analiz</h1>
+        <p>Risk skorunu gör; geçmiş analizlerini listele ve detaylarını incele.</p>
+      </div>
+    </section>
+
+   
+    <section class="card">
+      <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+        <button id="btnRun" class="btn">Analizi Çalıştır</button>
+        <button id="btnLatest" class="btn secondary">Son Analizi Getir</button>
+        <button id="btnHistory" class="btn secondary">Geçmişi Getir</button>
+      </div>
+      <div id="out" class="small">Henüz sonuç yok.</div>
+      <div id="details" class="hidden">
+        <div class="grid2">
+          <div class="card-mini">
+            <div class="muted" style="font-weight:700;margin-bottom:6px">Nedenler</div>
+            <div class="list" id="reasonsInline"></div>
+          </div>
+          <div class="card-mini">
+            <div class="muted" style="font-weight:700;margin-bottom:6px">Öneriler</div>
+            <div class="list" id="recsInline"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    
+    <section id="historySection" class="card hidden">
+      <div style="display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap">
+        <h2 style="margin:0">Geçmiş Analizler</h2>
+        <div style="display:flex;gap:6px;align-items:center">
+          <button id="prev" class="btn secondary">Önceki</button>
+          <span id="pageInfo" class="small mono">1/1</span>
+          <button id="next" class="btn secondary">Sonraki</button>
+          <select id="limit" style="background:#0b1430;color:#EAF1FF;border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:8px">
+            <option>5</option><option selected>10</option><option>20</option>
+          </select>
+        </div>
+      </div>
+      <div id="histMsg" class="small" style="margin:8px 0 6px"></div>
+      <div style="overflow:auto">
+        <table class="tbl" id="histTable">
+          <thead>
+            <tr>
+              <th>Tarih</th>
+              <th>Risk</th>
+              <th>Düzey</th>
+              <th>Özet</th>
+              <th>İşlem</th>
+            </tr>
+          </thead>
+          <tbody id="histBody">
+            <tr><td colspan="5" class="small">Kayıt yok.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <footer>© <span id="y"></span> Kariyer Sağlık</footer>
+  </div>
+
+  
+  <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal">
+      <div class="head">
+        <div class="title" id="modalTitle">Analiz Detayı</div>
+        <div class="btnbar">
+          <button class="x" id="btnCsv">CSV İndir</button>
+          <button class="x" id="btnPdf">PDF İndir</button>
+          <button class="x" id="modalClose">Kapat</button>
+        </div>
+      </div>
+      <div id="modalHeader" class="card-mini" style="margin-bottom:10px"></div>
+      <div class="grid">
+        <div class="card-mini">
+          <div class="muted" style="font-weight:700;margin-bottom:6px">Nedenler</div>
+          <div class="list" id="reasonsList"></div>
+        </div>
+        <div class="card-mini">
+          <div class="muted" style="font-weight:700;margin-bottom:6px">Öneriler</div>
+          <div class="list" id="recsList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const api=(p)=>p, token=()=>localStorage.getItem('token')||'', $=(s)=>document.querySelector(s);
+    const out=$('#out'), details=$('#details'), reasonsInline=$('#reasonsInline'), recsInline=$('#recsInline');
+    const histBody=$('#histBody'), historySection=$('#historySection');
+    document.getElementById('y').textContent=new Date().getFullYear();
+
+    const state={ page:1, limit:10, pages:1, hasNext:false };
+    let lastModalData=null;
+
+    function escapeHtml(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+    function badge(level){ return level==='Düşük'?'pill low':level==='Orta'?'pill mid':'pill high'; }
+
+    function renderOne(d){
+      const riskPercent=Math.round((d.riskScore??0)*100)||0;
+      const level=d.level||(riskPercent<33?'Düşük':riskPercent<66?'Orta':'Yüksek');
+      const dateStr = d.createdAt ? new Date(d.createdAt).toLocaleString() : '—';
+      out.innerHTML=`
+        <div class="card" style="background:#0e1734">
+          <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap">
+            <div>
+              <div class="small">Risk Skoru</div>
+              <div class="score">${riskPercent}%</div>
+            </div>
+            <div class="${badge(level)}">${level}</div>
+            <div class="small muted">Tarih: <span class="mono">${dateStr}</span></div>
+          </div>
+        </div>`;
+    }
+
+    function renderInlineDetails(d){
+      reasonsInline.innerHTML = (d.reasons||[]).map(r=>`
+        <div class="item">
+          <div>${r.type==='risk'?'⚠️ Risk':'✅ Güçlü'} — ${escapeHtml(r.message||'')}</div>
+          <div class="sub">Ağırlık: ${Math.round((r.weight||0)*100)}%</div>
+        </div>
+      `).join('') || '<div class="muted">Neden yok.</div>';
+
+      recsInline.innerHTML = (d.recommendations||[]).map(x=>`
+        <div class="item">
+          <div>🧭 ${escapeHtml(x.action||'')}</div>
+          <div class="sub">Beklenen risk düşüşü: ${Math.round((x.expectedRiskDrop||0)*100)}%</div>
+          ${x.rationale ? `<div class="sub">${escapeHtml(x.rationale)}</div>` : ''}
+        </div>
+      `).join('') || '<div class="muted">Öneri yok.</div>';
+
+      details.classList.remove('hidden');
+    }
+
+    
+    document.getElementById('btnRun').onclick=async()=>{
+      out.textContent='Analiz çalıştırılıyor...';
+      try{
+        const r=await fetch(api('/analysis/run'),{method:'POST',headers:{Authorization:'Bearer '+token()}});
+        const j=await r.json(); if(!r.ok) throw new Error(j.message||'Hata');
+        renderOne(j);
+        details.classList.add('hidden');      
+        historySection.classList.add('hidden'); 
+      }catch(e){ out.textContent='Hata: '+e.message; }
+    };
+
+    document.getElementById('btnLatest').onclick=async()=>{
+      out.textContent='Son analiz getiriliyor...';
+      try{
+        const r=await fetch(api('/analysis/latest'),{headers:{Authorization:'Bearer '+token()}});
+        const j=await r.json(); if(!r.ok) throw new Error(j.message||'Hata');
+        renderOne(j);
+        renderInlineDetails(j);                 
+        historySection.classList.add('hidden'); 
+      }catch(e){ out.textContent='Hata: '+e.message; }
+    };
+
+    document.getElementById('btnHistory').onclick=async()=>{
+      historySection.classList.remove('hidden');
+      state.page=1;
+      await loadHistory();
+    };
+
+    
+    async function loadHistory(){
+      $('#histMsg').textContent='Yükleniyor...';
+      try{
+        const url=`/analysis/history?page=${state.page}&limit=${state.limit}`;
+        const r=await fetch(api(url),{headers:{Authorization:'Bearer '+token()}});
+        const j=await r.json(); if(!r.ok) throw new Error(j.message||'Hata');
+
+        state.page=j.page; state.limit=j.limit; state.pages=j.pages; state.hasNext=j.hasNext;
+
+        histBody.innerHTML='';
+        if(!j.items.length){
+          histBody.innerHTML='<tr><td class="small" colspan="5">Kayıt yok.</td></tr>';
+        }else{
+          j.items.forEach(it=>{
+            const riskPercent=Math.round((it.riskScore??0)*100);
+            const level=it.level||(riskPercent<33?'Düşük':riskPercent<66?'Orta':'Yüksek');
+            const reason=it.reasons?.[0]?.message? escapeHtml(it.reasons[0].message) : '—';
+            const rec=it.recommendations?.[0]?.action? escapeHtml(it.recommendations[0].action) : '—';
+            const dateStr = it.createdAt ? new Date(it.createdAt).toLocaleString() : '—';
+            const row=document.createElement('tr');
+            row.innerHTML=`
+              <td>${dateStr}</td>
+              <td>${isFinite(riskPercent)?riskPercent+'%':'—'}</td>
+              <td><span class="${badge(level)}">${level}</span></td>
+              <td><div class="small">${reason}</div><div class="small" style="opacity:.8">🧭 ${rec}</div></td>
+              <td style="display:flex;gap:6px;flex-wrap:wrap">
+                <button class="btn secondary open" data-id="${it._id}" title="Aç">🔍 Aç</button>
+                <button class="x danger del" data-id="${it._id}" title="Sil">Sil</button>
+              </td>
+            `;
+            histBody.appendChild(row);
+          });
+        }
+        $('#pageInfo').textContent = `${state.page}/${Math.max(1,state.pages)}`;
+        $('#histMsg').textContent = '';
+      }catch(e){
+        $('#histMsg').textContent = 'Hata: '+e.message;
+      }
+    }
+
+    
+    histBody.addEventListener('click', async (e)=>{
+      const openBtn = e.target.closest('button.open');
+      const delBtn  = e.target.closest('button.del');
+      if (!openBtn && !delBtn) return;
+
+      const id = (openBtn||delBtn).dataset.id;
+      if (!id) return;
+
+      if (openBtn) {
+        try{
+          const data = await fetchById(id);
+          showModal(data);
+        }catch(err){
+          alert('Hata: '+(err.message||'Analiz getirilemedi'));
+        }
+      }
+
+      if (delBtn) {
+        const ok = confirm('Bu analiz kaydını silmek istediğine emin misin?');
+        if (!ok) return;
+        try{
+          const r = await fetch(api('/analysis/'+encodeURIComponent(id)), {
+            method: 'DELETE',
+            headers: { Authorization: 'Bearer '+token() }
+          });
+          const j = await r.json();
+          if (!r.ok) throw new Error(j.message||'Silinemedi');
+          await loadHistory(); 
+        }catch(err){
+          alert('Silme hatası: '+(err.message||'Bilinmeyen hata'));
+        }
+      }
+    });
+
+    async function fetchById(id){
+      const r=await fetch(api('/analysis/'+encodeURIComponent(id)),{headers:{Authorization:'Bearer '+token()}});
+      const j=await r.json(); if(!r.ok) throw new Error(j.message||'Hata');
+      return j;
+    }
+
+   
+    const overlay=$('#overlay'),
+          modalTitle=$('#modalTitle'),
+          modalHeader=$('#modalHeader'),
+          reasonsList=$('#reasonsList'),
+          recsList=$('#recsList'),
+          btnPdf=$('#btnPdf'),
+          btnCsv=$('#btnCsv');
+
+    function openModal(){ overlay.style.display='flex'; overlay.setAttribute('aria-hidden','false'); }
+    function closeModal(){ overlay.style.display='none'; overlay.setAttribute('aria-hidden','true'); }
+    document.getElementById('modalClose').onclick=closeModal;
+    overlay.addEventListener('click',(e)=>{ if(e.target===overlay) closeModal(); });
+
+    function headerFor(d){
+      const rp=Math.round((d.riskScore??0)*100)||0;
+      const lvl=d.level||(rp<33?'Düşük':rp<66?'Orta':'Yüksek');
+      return `
+        <div style="display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap">
+          <div>
+            <div class="muted">Risk Skoru</div>
+            <div class="score">${rp}%</div>
+          </div>
+          <div class="${badge(lvl)}">${lvl}</div>
+        </div>`;
+    }
+
+    function fillModal(d){
+      modalHeader.innerHTML = headerFor(d);
+      reasonsList.innerHTML = (d.reasons||[]).map(r=>`
+        <div class="item">
+          <div>${r.type==='risk'?'⚠️ Risk':'✅ Güçlü'} — ${escapeHtml(r.message||'')}</div>
+          <div class="sub">Ağırlık: ${Math.round((r.weight||0)*100)}%</div>
+        </div>
+      `).join('') || '<div class="muted">Neden yok.</div>';
+
+      recsList.innerHTML = (d.recommendations||[]).map(x=>`
+        <div class="item">
+          <div>🧭 ${escapeHtml(x.action||'')}</div>
+          <div class="sub">Beklenen risk düşüşü: ${Math.round((x.expectedRiskDrop||0)*100)}%</div>
+          ${x.rationale ? `<div class="sub">${escapeHtml(x.rationale)}</div>` : ''}
+        </div>
+      `).join('') || '<div class="muted">Öneri yok.</div>';
+    }
+
+    function showModal(d){
+      lastModalData = d;
+      modalTitle.textContent = 'Analiz Detayı';
+      fillModal(d);
+      openModal();
+    }
+
+    
+    btnPdf.onclick=()=>{ if(lastModalData) downloadPdf(lastModalData); };
+    btnCsv.onclick=()=>{ if(lastModalData) downloadCsv(lastModalData); };
+
+    function downloadCsv(d){
+      const lines=[];
+      const rp=Math.round((d.riskScore??0)*100)||0;
+      lines.push(`riskPercent,${rp}`);
+      lines.push(`level,${d.level||''}`);
+      lines.push('');
+      lines.push('reasons_type,reasons_message,reasons_weight');
+      (d.reasons||[]).forEach(r=>{
+        lines.push(`${r.type||''},"${(r.message||'').replace(/"/g,'""')}",${Math.round((r.weight||0)*100)}`);
+      });
+      lines.push('');
+      lines.push('recommendations_action,recommendations_expectedDrop,recommendations_rationale');
+      (d.recommendations||[]).forEach(x=>{
+        lines.push(`"${(x.action||'').replace(/"/g,'""')}",${Math.round((x.expectedRiskDrop||0)*100)},"${(x.rationale||'').replace(/"/g,'""')}"`);
+      });
+      const blob=new Blob([lines.join('\n')],{type:'text/csv;charset=utf-8'});
+      const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+      a.download=`analysis.csv`; a.click();
+      setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+    }
+
+    function downloadPdf(d){
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ unit:'pt', format:'a4' });
+      const pad=40; let y=pad;
+
+      const rp=Math.round((d.riskScore??0)*100)||0;
+      const lvl=d.level||(rp<33?'Düşük':rp<66?'Orta':'Yüksek');
+
+      doc.setFont('helvetica','bold'); doc.setFontSize(16);
+      doc.text('Kariyer Sağlık — Analiz Özeti', pad, y); y+=22;
+      doc.setFont('helvetica','normal'); doc.setFontSize(11);
+      doc.text(`Risk Skoru: ${rp}% — Düzey: ${lvl}`, pad, y); y+=24;
+
+      doc.setFont('helvetica','bold'); doc.text('Nedenler', pad, y); y+=16; doc.setFont('helvetica','normal');
+      (d.reasons||[]).forEach((r,i)=>{
+        const t = `${i+1}. ${r.type==='risk'?'[RİSK]':'[GÜÇLÜ]'} ${r.message||''} — Ağırlık: ${Math.round((r.weight||0)*100)}%`;
+        y = writeMultiline(doc, t, pad, y, 520); y+=6;
+      });
+      y+=10;
+
+      doc.setFont('helvetica','bold'); doc.text('Öneriler', pad, y); y+=16; doc.setFont('helvetica','normal');
+      (d.recommendations||[]).forEach((x,i)=>{
+        const t1 = `${i+1}. ${x.action||''} — Beklenen düşüş: ${Math.round((x.expectedRiskDrop||0)*100)}%`;
+        y = writeMultiline(doc, t1, pad, y, 520);
+        if(x.rationale){ y = writeMultiline(doc, `   Neden: ${x.rationale}`, pad, y+2, 520); }
+        y+=6;
+      });
+
+      doc.save(`analysis.pdf`);
+    }
+
+    function writeMultiline(doc, text, x, y, maxWidth){
+      const lines = doc.splitTextToSize(text, maxWidth);
+      lines.forEach(line=>{ doc.text(line, x, y); y += 14; });
+      return y;
+    }
+
+    
+    document.getElementById('prev').onclick=async()=>{ if(state.page>1){ state.page--; await loadHistory(); } };
+    document.getElementById('next').onclick=async()=>{ if(state.hasNext){ state.page++; await loadHistory(); } };
+    document.getElementById('limit').onchange=async(e)=>{ state.limit = Number(e.target.value)||10; state.page=1; await loadHistory(); };
+  </script>
+</body>
+</html>

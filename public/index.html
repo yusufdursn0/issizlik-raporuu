@@ -1,304 +1,98 @@
-<!-- public/index.html -->
 <!doctype html>
 <html lang="tr">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Kariyer Sağlık Raporu — Dashboard</title>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Ana Sayfa — Kariyer Sağlık</title>
+  <link rel="stylesheet" href="/styles.css"/>
   <style>
-    :root { --bg:#0b1020; --card:#121a2e; --muted:#8aa0c9; --text:#e8eefc; --accent:#6aa6ff; --ok:#6affad; --err:#ff6a6a; }
-    * { box-sizing: border-box; }
-    body { margin:0; font-family: ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial; background: radial-gradient(1200px 600px at 70% -10%, #1b2b55 0%, transparent 55%), var(--bg); color: var(--text); }
-    header { padding: 20px 16px; max-width:1100px; margin:16px auto; }
-    h1 { margin:0; font-size: 20px; letter-spacing:.2px; }
-    .wrap { max-width:1100px; margin:0 auto; padding: 0 16px 24px; display:grid; gap:16px; grid-template-columns: 1.1fr .9fr; }
-    .card { background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01)); border:1px solid rgba(255,255,255,.06); border-radius: 14px; padding:16px; }
-    .card h2 { margin:0 0 10px; font-size:15px; color:var(--muted); }
-    label { display:block; font-size:12px; color:var(--muted); margin:10px 0 6px; }
-    input[type="text"], input[type="password"], input[type="email"] {
-      width:100%; background:#0c1430; color:var(--text); border:1px solid rgba(255,255,255,.08); border-radius:10px; padding:10px 12px; outline:none;
-    }
-    input::placeholder { color:#7d89a8; }
-    .row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-    .btn { background: linear-gradient(180deg, #2a55ff, #1a3ec9); border:none; color:white; padding:10px 14px; border-radius:10px; cursor:pointer; font-weight:600; }
-    .btn.secondary { background:#253254; }
-    .muted { color:var(--muted); }
-    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
-    .chips { display:flex; flex-wrap:wrap; gap:6px; }
-    .chip { background:#192447; border:1px solid rgba(255,255,255,.08); border-radius:999px; padding:6px 10px; font-size:12px; }
-    .score { font-size:40px; font-weight:800; }
-    .lvl { font-weight:700; padding:6px 10px; border-radius:999px; }
-    .lvl.low { background:#103a2c; color:#92ffd6; }
-    .lvl.mid { background:#3b2b0e; color:#ffd992; }
-    .lvl.high{ background:#3a1010; color:#ffacac; }
-    .small { font-size:12px; }
-    footer { text-align:center; color:#97a5c8; font-size:12px; padding:16px; }
-    @media (max-width:920px){ .wrap{ grid-template-columns:1fr; } }
+    .wrap-narrow{max-width:720px;margin:0 auto}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .grid-1{display:grid;grid-template-columns:1fr;gap:12px}
+    label{font-size:12px;color:#9BB1DA;margin-bottom:4px;display:block}
+    input{width:100%;background:#0b1430;color:#EAF1FF;border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:10px}
+    .or{display:flex;align-items:center;gap:10px;margin:12px 0}
+    .or:before,.or:after{content:"";height:1px;background:rgba(255,255,255,.12);flex:1}
+    .providers{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .prov{display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:10px;background:#0e1734;text-decoration:none;color:#EAF1FF}
+    .muted{color:#9BB1DA}
+    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
   </style>
 </head>
 <body>
-  <header class="card">
-    <h1>💼 Kariyer Sağlık Raporu — Dashboard</h1>
-  </header>
+  <div class="wrap wrap-narrow">
+    <div class="nav">
+      <div class="brand">💼 Kariyer Sağlık</div>
+      <div class="sp"></div>
 
-  <main class="wrap">
-    <!-- Sol: Auth + Profil -->
+    </div>
+
+    <section class="hero">
+      <div class="hero-in">
+        <h1>Hoş geldin</h1>
+        <p>Giriş yap, profilini güncelle ve analizleri başlat.</p>
+      </div>
+    </section>
+
     <section class="card">
-      <h2>1) Kayıt / Giriş</h2>
-      <div class="row">
+      <h3>Giriş Yap</h3>
+      <form id="loginForm" class="grid">
         <div>
-          <label>Email</label>
-          <input id="email" type="email" placeholder="ornek@posta.com" />
+          <label for="loginEmail">E-posta</label>
+          <input id="loginEmail" type="email" placeholder="ornek@posta.com" required>
         </div>
         <div>
-          <label>Şifre</label>
-          <input id="password" type="password" placeholder="••••••••" />
+          <label for="loginPassword">Şifre</label>
+          <input id="loginPassword" type="password" placeholder="••••••" required>
         </div>
-      </div>
-      <div style="margin-top:10px; display:flex; gap:8px; align-items:center;">
-        <button id="btnRegister" class="btn">Kayıt Ol</button>
-        <button id="btnLogin" class="btn">Giriş Yap</button>
-        <input id="token" class="mono" placeholder="Bearer token" style="flex:1;">
-        <button id="btnLogout" class="btn secondary" style="display:none;">Çıkış</button>
-      </div>
-      <div id="authMsg" class="small" style="margin-top:8px;"></div>
+        <div class="grid-1">
+          <div class="row">
+            <button id="btnLogin" class="btn">Giriş Yap</button>
+            <!-- 🔹 Şifreni mi unuttun? -->
+            <a class="small muted" href="/forgot-password.html">Şifreni mi unuttun?</a>
+          </div>
+          <div id="loginMsg" class="small muted"></div>
+        </div>
+      </form>
 
-      <hr style="opacity:.15; margin:16px 0;">
+      <div class="or"><span class="small muted">veya</span></div>
 
-      <h2>2) Profil</h2>
-      <div class="row">
-        <div>
-          <label>Şehir</label>
-          <input id="city" type="text" placeholder="İstanbul" />
-        </div>
-        <div>
-          <label>Rol</label>
-          <input id="role" type="text" placeholder="Frontend Geliştirici" />
-        </div>
+      <div class="providers">
+        <a class="prov" href="/oauth/google">🔵 Google ile Devam Et</a>
+        <a class="prov" href="/oauth/github">⚫ GitHub ile Devam Et</a>
       </div>
-      <label>Beceriler (virgülle ayır)</label>
-      <input id="skills" type="text" placeholder="Python, AWS, React" />
-      <div style="margin-top:10px; display:flex; gap:8px;">
-        <button id="btnFetchProfile" class="btn secondary">Profilimi Getir</button>
-        <button id="btnUpdateProfile" class="btn">Profili Güncelle</button>
-      </div>
-      <div id="profileMsg" class="small" style="margin-top:8px;"></div>
+
+      <p class="small muted" style="margin-top:12px">
+        Hesabın yok mu? <a href="/register.html">Kayıt ol</a>
+      </p>
     </section>
-
-    <!-- Sağ: Analiz -->
-    <section class="card">
-      <h2>3) Analiz</h2>
-      <div style="display:flex; gap:8px; margin-bottom:12px;">
-        <button id="btnRun" class="btn">Analizi Çalıştır</button>
-        <button id="btnLatest" class="btn secondary">Son Analizi Getir</button>
-      </div>
-      <div id="result" class="small muted">Henüz sonuç yok.</div>
-    </section>
-
-    <!-- Alt: CV Yükleme -->
-    <section class="card" style="grid-column:1 / -1;">
-      <h2>4) CV Yükle (PDF/DOCX)</h2>
-      <div class="row" style="align-items:center;">
-        <input type="file" id="cvfile" accept=".pdf,.doc,.docx" />
-        <button id="btnUpload" class="btn">Yükle ve Profili Güncelle</button>
-      </div>
-      <div id="uploadMsg" class="small" style="margin-top:8px;"></div>
-    </section>
-  </main>
-
-  <footer>© <span id="y"></span> Kariyer Sağlık Raporu</footer>
+  </div>
 
   <script>
-    // Aynı origin: API tabanı relative olsun
-    const api = (p) => p;
-    const $ = (s) => document.querySelector(s);
+    const $ = s => document.querySelector(s);
+    const msg = $('#loginMsg');
 
-    const el = {
-      email: $("#email"),
-      password: $("#password"),
-      token: $("#token"),
-      btnLogout: $("#btnLogout"),
-      authMsg: $("#authMsg"),
-      city: $("#city"),
-      role: $("#role"),
-      skills: $("#skills"),
-      profileMsg: $("#profileMsg"),
-      result: $("#result"),
-      cvfile: $("#cvfile"),
-      uploadMsg: $("#uploadMsg")
+    document.getElementById('btnLogin').onclick = async (e) => {
+      e.preventDefault();
+      msg.textContent = 'Giriş yapılıyor...';
+      const email = $('#loginEmail').value.trim();
+      const password = $('#loginPassword').value.trim();
+
+      try {
+        const r = await fetch('/auth/login', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ email, password })
+        });
+        const j = await r.json();
+        if (!r.ok) throw new Error(j.message || 'Giriş başarısız');
+
+        if (j.token) localStorage.setItem('token', j.token);
+        window.location.href = '/profile.html';
+      } catch (err) {
+        msg.textContent = 'Hata: ' + (err.message || 'Giriş başarısız');
+      }
     };
-
-    const setToken = (t) => {
-      localStorage.setItem("token", t || "");
-      el.token.value = t || "";
-      el.btnLogout.style.display = t ? "inline-block" : "none";
-    };
-    const getToken = () => el.token.value || localStorage.getItem("token") || "";
-
-    // ---- Auth ----
-    $("#btnRegister").addEventListener("click", async () => {
-      msg(el.authMsg, "Kayıt olunuyor...", "muted");
-      try {
-        const r = await fetch(api("/auth/register"), {
-          method: "POST",
-          headers: { "Content-Type":"application/json" },
-          body: JSON.stringify({ email: el.email.value.trim(), password: el.password.value })
-        });
-        const j = await r.json();
-        if (!r.ok) throw new Error(j.message || "Kayıt başarısız");
-        setToken(j.token);
-        msg(el.authMsg, "Kayıt başarılı ve giriş yapıldı.", "ok");
-      } catch(e){ msg(el.authMsg, e.message, "err"); }
-    });
-
-    $("#btnLogin").addEventListener("click", async () => {
-      msg(el.authMsg, "Giriş yapılıyor...", "muted");
-      try {
-        const r = await fetch(api("/auth/login"), {
-          method: "POST",
-          headers: { "Content-Type":"application/json" },
-          body: JSON.stringify({ email: el.email.value.trim(), password: el.password.value })
-        });
-        const j = await r.json();
-        if (!r.ok) throw new Error(j.message || "Giriş başarısız");
-        setToken(j.token);
-        msg(el.authMsg, "Giriş başarılı.", "ok");
-      } catch(e){ msg(el.authMsg, e.message, "err"); }
-    });
-
-    el.btnLogout.addEventListener("click", () => { setToken(""); msg(el.authMsg, "Çıkış yapıldı.", "muted"); });
-
-    // ---- Profil ----
-    $("#btnFetchProfile").addEventListener("click", async () => {
-      msg(el.profileMsg, "Profil getiriliyor...", "muted");
-      try {
-        const r = await fetch(api("/profile/me"), {
-          headers: { "Authorization": "Bearer " + getToken() }
-        });
-        const j = await r.json();
-        if (!r.ok) throw new Error(j.message || "Profil alınamadı");
-        el.city.value = j.city || "";
-        el.role.value = j.role || "";
-        el.skills.value = (j.skills || []).join(", ");
-        msg(el.profileMsg, "Profil getirildi.", "ok");
-      } catch(e){ msg(el.profileMsg, e.message, "err"); }
-    });
-
-    $("#btnUpdateProfile").addEventListener("click", async () => {
-      msg(el.profileMsg, "Güncelleniyor...", "muted");
-      try {
-        const body = {
-          city: el.city.value.trim() || undefined,
-          role: el.role.value.trim() || undefined,
-          skills: el.skills.value.split(",").map(s => s.trim()).filter(Boolean)
-        };
-        const r = await fetch(api("/profile/me"), {
-          method: "PUT",
-          headers: {
-            "Authorization": "Bearer " + getToken(),
-            "Content-Type":"application/json"
-          },
-          body: JSON.stringify(body)
-        });
-        const j = await r.json();
-        if (!r.ok) throw new Error(j.message || "Profil güncellenemedi");
-        msg(el.profileMsg, "Profil güncellendi.", "ok");
-      } catch(e){ msg(el.profileMsg, e.message, "err"); }
-    });
-
-    // ---- Analiz ----
-    $("#btnRun").addEventListener("click", async () => {
-      el.result.textContent = "Analiz çalıştırılıyor...";
-      try {
-        const r = await fetch(api("/analysis/run"), {
-          method: "POST",
-          headers: { "Authorization":"Bearer " + getToken() }
-        });
-        const j = await r.json();
-        if (!r.ok) throw new Error(j.message || "Analiz başarısız");
-        renderResult(j);
-      } catch(e){ el.result.textContent = "Hata: " + e.message; }
-    });
-
-    $("#btnLatest").addEventListener("click", async () => {
-      el.result.textContent = "Son analiz getiriliyor...";
-      try {
-        const r = await fetch(api("/analysis/latest"), {
-          headers: { "Authorization":"Bearer " + getToken() }
-        });
-        const j = await r.json();
-        if (!r.ok) throw new Error(j.message || "Sonuç alınamadı");
-        renderResult(j);
-      } catch(e){ el.result.textContent = "Hata: " + e.message; }
-    });
-
-    // ---- CV Yükleme ----
-    $("#btnUpload").addEventListener("click", async () => {
-      msg(el.uploadMsg, "Yükleniyor...", "muted");
-      try {
-        const f = el.cvfile.files[0];
-        if (!f) throw new Error("Dosya seçin");
-        const fd = new FormData();
-        fd.append("file", f);
-        const r = await fetch(api("/upload/cv"), {
-          method: "POST",
-          headers: { "Authorization": "Bearer " + getToken() },
-          body: fd
-        });
-        const j = await r.json();
-        if (!r.ok) throw new Error(j.message || "Yükleme başarısız");
-        msg(el.uploadMsg, "CV yüklendi, profil güncellendi.", "ok");
-      } catch(e){ msg(el.uploadMsg, e.message, "err"); }
-    });
-
-    // ---- Görsel yardımcılar ----
-    function msg(node, text, type){
-      node.textContent = text;
-      node.style.color = type === "ok" ? "var(--ok)" : type === "err" ? "var(--err)" : "var(--muted)";
-    }
-
-    function renderResult(d){
-      const riskPercent = Math.round((d.riskScore ?? 0) * 100) || d.riskPercent || 0;
-      const level = d.level || (riskPercent < 33 ? "Düşük" : riskPercent < 66 ? "Orta" : "Yüksek");
-      const lvlClass = level === "Düşük" ? "low" : level === "Orta" ? "mid" : "high";
-
-      el.result.innerHTML = `
-        <div class="card" style="background:#0e1734;">
-          <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
-            <div>
-              <div class="small muted">Risk Skoru</div>
-              <div class="score">${riskPercent}%</div>
-            </div>
-            <div class="lvl ${lvlClass}">${level}</div>
-          </div>
-
-          <div class="row" style="margin-top:10px;">
-            <div>
-              <div class="small muted">Nedenler</div>
-              <div class="chips" style="margin-top:6px;">
-                ${(d.reasons||[]).map(r => `<span class="chip">${r.type==='risk'?'⚠️':'✅'} ${escapeHtml(r.message)}</span>`).join('') || '<span class="muted">—</span>'}
-              </div>
-            </div>
-            <div>
-              <div class="small muted">Öneriler</div>
-              <div class="chips" style="margin-top:6px;">
-                ${(d.recommendations||[]).map(rc => `<span class="chip">🧭 ${escapeHtml(rc.action)} <span class="muted">(${Math.round((rc.expectedRiskDrop||0)*100)}%)</span></span>`).join('') || '<span class="muted">—</span>'}
-              </div>
-            </div>
-          </div>
-
-          <div class="small muted" style="margin-top:8px;">Result ID: <span class="mono">${d.resultId || '—'}</span></div>
-        </div>
-      `;
-    }
-
-    function escapeHtml(s){
-      return String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-    }
-
-    // init
-    document.getElementById("y").textContent = new Date().getFullYear();
-    setToken(localStorage.getItem("token") || "");
   </script>
 </body>
 </html>

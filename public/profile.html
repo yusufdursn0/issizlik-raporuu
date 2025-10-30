@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Profil — Kariyer Sağlık</title>
+  <link rel="stylesheet" href="/styles.css"/>
+  <style>
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .grid-1{display:grid;grid-template-columns:1fr;gap:12px}
+    label{font-size:12px;color:#9BB1DA;margin-bottom:4px;display:block}
+    input,select{width:100%;background:#0b1430;color:#EAF1FF;border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:10px}
+    .muted{color:#9BB1DA}
+  </style>
+</head>
+<body>
+  <!-- OAuth dönüş token'ını al & temizle -->
+  <script>
+    (function () {
+      const m = location.hash.match(/token=([^&]+)/);
+      if (m) {
+        localStorage.setItem('token', decodeURIComponent(m[1]));
+        history.replaceState(null, '', location.pathname + location.search); // #token'ı kaldır
+      }
+    })();
+  </script>
+
+  <div class="wrap">
+    <div class="nav">
+      <div class="brand">💼 Kariyer Sağlık</div>
+      <div class="sp"></div>
+      
+      <a class="btn secondary" href="/analysis.html">Analiz</a>
+      <a class="btn secondary" href="/reset-password.html">Şifre</a>
+      <button id="logoutBtn" class="btn secondary" type="button">Çıkış</button>
+    </div>
+
+    <section class="hero">
+      <div class="hero-in">
+        <h1>Profil</h1>
+        <p>Bilgilerini güncelle; analiz motoru daha doğru sonuç üretsin.</p>
+      </div>
+    </section>
+
+    <section class="card">
+      <form id="form" class="grid">
+        <div>
+          <label for="fullName">İsim Soyisim</label>
+          <input id="fullName" name="fullName" placeholder="Ad Soyad"/>
+        </div>
+
+        <div>
+          <label for="phone">Telefon</label>
+          <input id="phone" name="phone" placeholder="5xx xxx xx xx"/>
+        </div>
+
+        <div>
+          <label for="city">Şehir</label>
+          <input id="city" name="city" placeholder="İstanbul"/>
+        </div>
+
+        <div>
+          <label for="age">Yaş</label>
+          <input id="age" name="age" type="number" min="15" max="80" placeholder="28"/>
+        </div>
+
+        <div>
+          <label for="experienceYears">Toplam Tecrübe (yıl)</label>
+          <input id="experienceYears" name="experienceYears" type="number" min="0" max="60" placeholder="5"/>
+        </div>
+
+        <div>
+          <label for="sector">Sektör</label>
+          <input id="sector" name="sector" placeholder="Yazılım"/>
+        </div>
+
+        <div>
+          <label for="skills">Beceriler (virgülle ayır)</label>
+          <input id="skills" name="skills" placeholder="Python, AWS, React"/>
+        </div>
+
+        <div>
+          <label for="degree">Eğitim — Derece</label>
+          <input id="degree" name="degree" placeholder="Lisans / Yüksek Lisans / Doktora"/>
+        </div>
+
+        <div>
+          <label for="field">Eğitim — Bölüm</label>
+          <input id="field" name="field" placeholder="Bilgisayar Mühendisliği"/>
+        </div>
+
+        <div>
+          <label for="university">Mezun Olduğu Üniversite</label>
+          <select id="university" name="university">
+            <option value="">Seçiniz</option>
+            <option>Orta Doğu Teknik Üniversitesi (ODTÜ)</option>
+            <option>İstanbul Teknik Üniversitesi (İTÜ)</option>
+            <option>Boğaziçi Üniversitesi</option>
+            <option>Hacettepe Üniversitesi</option>
+            <option>İstanbul Üniversitesi</option>
+            <option>Ankara Üniversitesi</option>
+            <option>Ege Üniversitesi</option>
+            <option>Dokuz Eylül Üniversitesi</option>
+            <option>Yıldız Teknik Üniversitesi</option>
+            <option>Marmara Üniversitesi</option>
+            <option>Bilkent Üniversitesi</option>
+            <option>Koç Üniversitesi</option>
+            <option>Sabancı Üniversitesi</option>
+            <option>Yeditepe Üniversitesi</option>
+            <option>Galatasaray Üniversitesi</option>
+            <option>Karadeniz Teknik Üniversitesi</option>
+            <option>Selçuk Üniversitesi</option>
+            <option>Erciyes Üniversitesi</option>
+            <option>Akdeniz Üniversitesi</option>
+            <option>Uludağ Üniversitesi</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="graduationYear">Mezuniyet Yılı</label>
+          <input id="graduationYear" name="graduationYear" type="number" min="1950" max="2100" placeholder="2022"/>
+        </div>
+      </form>
+
+      <div style="display:flex;gap:10px;margin-top:12px">
+        <button id="save" class="btn">Kaydet</button>
+        <span id="msg" class="small muted"></span>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const api = (p)=>p;
+    const token = ()=> localStorage.getItem('token') || '';
+    const $ = (s)=> document.querySelector(s);
+    const msg = $('#msg');
+
+    function set(v, id){ const el = $(id); if(el) el.value = v ?? ''; }
+    function get(id){ const el = $(id); return el ? el.value.trim() : ''; }
+
+    async function loadProfile(){
+      msg.textContent = 'Yükleniyor...';
+      try{
+        const r = await fetch(api('/profile'), { headers: { Authorization: 'Bearer '+token() }});
+        const p = await r.json();
+        // Auth yoksa giriş sayfasına dön
+        if (r.status === 401) { window.location.href = '/index.html'; return; }
+
+        set(p.fullName, '#fullName');
+        set(p.phone, '#phone');
+        set(p.city, '#city');
+        set(p.age, '#age');
+        set(p.sector, '#sector');
+        set(p.experienceYears, '#experienceYears');
+        set(Array.isArray(p.skills) ? p.skills.join(', ') : '', '#skills');
+        set(p.education?.degree, '#degree');
+        set(p.education?.field, '#field');
+        if(p.education?.university) $('#university').value = p.education.university;
+        set(p.education?.graduationYear, '#graduationYear');
+
+        msg.textContent = '';
+      }catch(e){
+        msg.textContent = 'Profil getirilemedi: '+ (e.message||'Hata');
+      }
+    }
+
+    async function saveProfile(){
+      msg.textContent = 'Kaydediliyor...';
+
+      const skillsStr = get('#skills');
+      const skills = skillsStr ? skillsStr.split(',').map(s=>s.trim()).filter(Boolean) : [];
+
+      const payload = {
+        fullName: get('#fullName'),
+        phone: get('#phone'),
+        city: get('#city'),
+        age: Number(get('#age')) || undefined,
+        sector: get('#sector'),
+        experienceYears: Number(get('#experienceYears')) || undefined,
+        skills,
+        education: {
+          degree: get('#degree'),
+          field: get('#field'),
+          university: $('#university').value || undefined,
+          graduationYear: Number(get('#graduationYear')) || undefined,
+        }
+      };
+
+      try{
+        const r = await fetch(api('/profile'), {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer '+token()
+          },
+          body: JSON.stringify(payload)
+        });
+        const j = await r.json();
+        if(!r.ok) throw new Error(j.message || 'Kaydedilemedi');
+        msg.textContent = '✔️ Profil güncellendi';
+      }catch(e){
+        msg.textContent = 'Hata: ' + (e.message || 'Kaydedilemedi');
+      }
+    }
+
+    document.getElementById('save').onclick = (e)=>{ e.preventDefault(); saveProfile(); };
+    loadProfile();
+     const logoutBtn = document.getElementById('logoutBtn');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', () => {
+      localStorage.removeItem('token');
+      window.location.href = '/index.html';
+    });
+  }
+  </script>
+</body>
+</html>

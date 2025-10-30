@@ -1,31 +1,49 @@
+// src/routes/profile.routes.js
 const express = require('express');
-const Profile = require('../models/Profile');
 const auth = require('../middleware/auth');
+const Profile = require('../models/Profile');
 const { profileUpdateSchema } = require('../utils/validators');
-
 
 const router = express.Router();
 
-
-router.get('/me', auth, async (req, res) => {
-    const profile = await Profile.findOne({ userId: req.user.id });
-    res.json(profile || {});
-});
-
-
-router.put('/me', auth, async (req, res) => {
+/** GET /profile  → kullanıcı profilini getir (yoksa boş obje) */
+router.get('/', auth, async (req, res, next) => {
     try {
-        const parsed = profileUpdateSchema.parse(req.body);
-        const updated = await Profile.findOneAndUpdate(
-            { userId: req.user.id },
-            { $set: parsed },
-            { new: true, upsert: true }
-        );
-        res.json(updated);
-    } catch (err) {
-        res.status(400).json({ message: err.message });
+        const p = await Profile.findOne({ userId: req.user.id }).lean();
+        res.json(p || {});
+    } catch (e) {
+        next(e);
     }
 });
 
+/** PUT /profile → kullanıcı profilini güncelle/oluştur */
+router.put('/', auth, async (req, res, next) => {
+    try {
+        // skills hem array hem "a, b, c" string gelebilir → normalize et
+        if (typeof req.body.skills === 'string') {
+            req.body.skills = req.body.skills
+                .split(',')
+                .map(s => s.trim())
+                .filter(Boolean);
+        }
+
+        // education boşsa {} yap
+        if (!req.body.education) req.body.education = {};
+
+        // Zod doğrulama
+        const data = profileUpdateSchema.parse(req.body);
+
+        // upsert
+        const updated = await Profile.findOneAndUpdate(
+            { userId: req.user.id },
+            { $set: data },
+            { new: true, upsert: true, setDefaultsOnInsert: true }
+        ).lean();
+
+        res.json(updated);
+    } catch (e) {
+        next(e);
+    }
+});
 
 module.exports = router;

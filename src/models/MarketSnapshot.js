@@ -1,30 +1,12 @@
 const mongoose = require('mongoose');
 
+const MarketSnapshotSchema = new mongoose.Schema({
+    asOf: { type: Date, index: true },
+    cityDemand: { type: Map, of: Number, default: {} },
+    skillDemand: { type: Map, of: Number, default: {} },
+    coSkills: { type: Map, of: [String], default: {} },
+    legacySkills: { type: [String], default: [] },
+}, { timestamps: true });
 
-// Örnek/Stub pazar anlık verisi. Gerçekte job board/lokal veri kaynaklarından beslenecek.
-const marketSnapshotSchema = new mongoose.Schema(
-    {
-        asOf: { type: Date, default: Date.now },
-        // skill -> demand(0..1), trend(-1..1), obsolete(boolean)
-        skills: {
-            type: Map,
-            of: new mongoose.Schema(
-                {
-                    demand: Number,
-                    trend: Number,
-                    obsolete: Boolean
-                },
-                { _id: false }
-            )
-        },
-        // cityRoleDemand: { "İstanbul|Frontend Geliştirici": 0.8, ... }
-        cityRoleDemand: {
-            type: Map,
-            of: Number
-        }
-    },
-    { timestamps: true }
-);
-
-
-module.exports = mongoose.model('MarketSnapshot', marketSnapshotSchema);
+MarketSnapshotSchema.index({ asOf: -1 });
+module.exports = mongoose.model('MarketSnapshot', MarketSnapshotSchema);
